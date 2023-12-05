@@ -6,7 +6,7 @@ import (
 	"log/slog"
 	"os"
 	"strconv"
-	"unicode"
+	"strings"
 
 	"github.com/calini/std/strutils"
 )
@@ -62,23 +62,29 @@ func main() {
 
 // BoundingDigits gets the bounding digits in the string
 func BoundingDigits(line string) (int, int) {
-	left := FirstDigit(line)
-	right := FirstDigit(strutils.Reverse(line))
+	left := FirstToken(line, Digits)
+	right := FirstToken(strutils.Reverse(line), strutils.ReverseAll(Digits))
 
 	return left, right
 }
 
-// FirstDigit finds the first instance of a digit represented in the string, or -1 if none found
-func FirstDigit(line string) int {
-	for _, ch := range line {
-		if unicode.IsDigit(ch) {
-			digit, err := strconv.Atoi(string(ch))
-			if err != nil {
-				slog.Error("Conversion error")
-			}
-			slog.Debug("found", "string", line, "digit", digit)
-			return digit
+var Digits = []string{
+	"zero", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine",
+	"0", "1", "2", "3", "4", "5", "6", "7", "8", "9",
+}
+
+// FirstToken finds the first instance of a digit represented in the string, or -1 if none found
+func FirstToken(line string, digits []string) int {
+	minPos, minDigitPos := len(line), -1
+
+	for i, dRep := range digits {
+		found := strings.Index(line, dRep)
+		if found != -1 && minPos > found {
+			minPos = found
+			minDigitPos = i
+			slog.Debug("found", "string", line, "digit", dRep)
 		}
 	}
-	return -1
+
+	return minDigitPos % 10
 }
