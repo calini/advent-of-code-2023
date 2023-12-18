@@ -62,7 +62,7 @@ func main() {
 		line := sc.Text()
 		game := ParseGame(line)
 
-		if IsValid(game, maxDraw) {
+		if IsValid(game) {
 			sum += game.Id
 		}
 	}
@@ -71,8 +71,8 @@ func main() {
 	fmt.Printf("Result: %d\n", sum)
 }
 
-// Checks if the Game's set of Draws are all valid
-func IsValid(game Game, maxDraw Draw) bool {
+// Checks if the Game's set of Draws are all valid, compared to the max possible draw set (maxDraw)
+func IsValid(game Game) bool {
 	for _, draw := range game.Draws {
 		if draw.Red > maxDraw.Red {
 			return false
