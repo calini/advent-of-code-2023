@@ -62,17 +62,37 @@ func main() {
 		line := sc.Text()
 		game := ParseGame(line)
 
-		if IsValid(game, maxDraw) {
-			sum += game.Id
-		}
+		sum += PowerOfMinSet(game)
 	}
 
 	// result
 	fmt.Printf("Result: %d\n", sum)
 }
 
-// Checks if the Game's set of Draws are all valid
-func IsValid(game Game, maxDraw Draw) bool {
+// PowerOfMinSet returns the product of the amounts of each color that have to exist for the set of draws to be valid
+// Example: `Game 1: 3 blue, 4 red; 1 red, 2 green, 6 blue; 2 green`
+// In game 1, the game could have been played with as few as 4 red, 2 green, and 6 blue cubes.
+// If any color had even one fewer cube, the game would have been impossible.
+func PowerOfMinSet(game Game) int {
+	maxRed, maxGreen, maxBlue := 0, 0, 0
+
+	for _, draw := range game.Draws {
+		if draw.Red > maxRed {
+			maxRed = draw.Red
+		}
+		if draw.Green > maxGreen {
+			maxGreen = draw.Green
+		}
+		if draw.Blue > maxBlue {
+			maxBlue = draw.Blue
+		}
+	}
+
+	return maxRed * maxGreen * maxBlue
+}
+
+// Checks if the Game's set of Draws are all valid, against each other
+func IsValid(game Game) bool {
 	for _, draw := range game.Draws {
 		if draw.Red > maxDraw.Red {
 			return false
