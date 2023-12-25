@@ -5,7 +5,9 @@ import (
 	"fmt"
 	"log/slog"
 	"os"
+	"strconv"
 	"strings"
+	"unicode"
 )
 
 type Handler struct {
@@ -48,16 +50,15 @@ func main() {
 	// checking the middle row for numbers, then checking if the numbers are a 'part'
 	// by checking for any non '.' characters
 
-	// preload the first line with a fake upper line
+	// pad the table a fake upper line
 	var line string
 	if sc.Scan() {
-		line = sc.Text()
-		slog.Debug("read", "line", line)
+		line = "." + sc.Text() + "." // pad vertically
 	}
 	upper := strings.Repeat(".", len(line))
 	// scan through
 	for sc.Scan() {
-		lower := sc.Text()
+		lower := "." + sc.Text() + "." // pad veritcally
 		numbers := PartNumbers(upper, line, lower)
 
 		// shift lines
@@ -70,7 +71,7 @@ func main() {
 		}
 	}
 
-	// post-load an extra lower line
+	// pad with an extra lower line
 	lower := strings.Repeat(".", len(line))
 	numbers := PartNumbers(upper, line, lower)
 	for _, nr := range numbers {
@@ -83,7 +84,52 @@ func main() {
 
 // Finds "part numbers" in the middle row.
 // "Part number" = A number that has a neighbouring special character (non-number, not ".")
-func PartNumbers(upper, middle, lower string) []int {
-	slog.Debug("Checking lines", "upper", upper, "middle", middle, "lower", lower)
-	return []int{}
+func PartNumbers(upper, middle, lower string) (numbers []int) {
+	// find numbers in the midle row
+	var middleRunes = []rune(middle)
+	for i := 0; i < len(middleRunes); i++ {
+		if unicode.IsDigit(middleRunes[i]) {
+			idxLeft := i
+			for unicode.IsDigit(middleRunes[i]) {
+				i++
+			}
+			idxRight := i
+
+			number, err := strconv.Atoi(string(middleRunes[idxLeft:idxRight]))
+			if err != nil {
+				slog.Error("Cannot convert number")
+			}
+
+			if IsPartNumber([]rune(upper), []rune(middle), []rune(lower), idxLeft, idxRight) {
+				numbers = append(numbers, number)
+				slog.Debug("Found", "number", number)
+			}
+		}
+
+	}
+	return numbers
+}
+
+// IsPartNumber checks around a number for special characters
+func IsPartNumber(upper, middle, lower []rune, leftIndex, rightIndex int) bool {
+
+	if IsSpecial(middle[leftIndex-1]) || IsSpecial(middle[rightIndex]) {
+		return true
+	}
+
+	for i := 0; i < rightIndex-leftIndex+2; i++ {
+		if IsSpecial(lower[leftIndex+i-1]) || IsSpecial(upper[leftIndex+i-1]) {
+			return true
+		}
+	}
+
+	return false
+}
+
+// IsSpecial returns true if passed a non-'.' and non-digit character
+func IsSpecial(ch rune) bool {
+	if ch == '.' || unicode.IsDigit(ch) {
+		return false
+	}
+	return true
 }
